@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "DocumentPIP",
+  "version": "0.0.1",
+  "description": "Add Document PIP fuctionality to YT",
+  "content_scripts": [
+    {
+      "js": ["content.js"],
+      "css": ["video-js.min.css"],
+      "matches": [
+        "https://www.youtube.com/watch?v=*"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [ "video.min.js", "video-js.min.css", "pip.js" ],
+      "matches": [ "https://www.youtube.com/*" ]
+    }
+  ]
+}
