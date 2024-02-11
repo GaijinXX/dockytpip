@@ -1,0 +1,180 @@
+* {
+    --header-height: 15;
+    user-select: none;
+}
+
+body {
+    overflow: hidden;
+    margin: 0px;
+}
+
+video {
+    width: 100% !important;
+    height: unset !important;
+}
+
+#player {
+    position: relative;
+}
+
+#overlay {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    /* opacity: 0; */
+}
+
+#controlBox {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+}
+
+#controlBox:hover {
+    opacity: 1;
+}
+
+#controls {
+    position: absolute;
+    bottom: 0px;
+    background-color: rgba(0, 0, 0, 0.85);
+    width: 100%;
+    height: 15%;
+    display: flex;
+}
+
+#controls button {
+    height: -webkit-fill-available;
+    margin: 10%;
+    background: none;
+    border: none;
+}
+
+#controls button:focus {
+    outline: 0;
+}
+
+#controls button svg {
+    height: 100%;
+    width: 100%;
+}
+
+#controls button:hover {
+    filter: drop-shadow(0px 0px 0.15lh #ffffff);
+}
+
+#controls #seekbar {
+    position: relative;
+    margin: 1% 0% 1% 0%;
+    height: -webkit-fill-available;
+    background-color: rgb(150, 150, 150);
+    border-radius: 0.7vw;
+    overflow: hidden;
+}
+
+#controls #seekbar #progress {
+    position: absolute;
+    height: 100%;
+    width: 0%;
+    background-color: rgb(255, 250, 250);
+}
+
+#controls #seekbar #line {
+    position: absolute;
+    visibility: hidden;
+    background-color: darkred;
+    width: max(1px, 0.5vw);
+    height: 100%;
+}
+
+#controls #seekbar #control {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+#dropup {
+    position: absolute;
+    bottom: 100%;
+    /* test with different aspect ratios */
+    background-color: rgba(0, 0, 0, 0.85);
+    height: calc(100% * (100 / var(--header-height) - 1));  /* 100% / h * (100% - h) */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    visibility: hidden;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+#volume-value {
+    font-family: system-ui;
+    font-size: 4vw;
+    font-weight: bold;
+    color: white;
+    margin: 2vh 0vh 02vh 0vh;
+}
+
+.spinner-container{
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.volume-container:hover #dropup {
+    visibility: visible;
+}
+
+#range-container {
+    width: 50%;
+    /* height: 100%; */
+    overflow: hidden;
+    border-radius: 0.7vw;
+    align-content: center;
+    margin: 2vh 0vh 2vh 0vh;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 100%;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    overflow: hidden;
+    margin: 0px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    background-color: gray;
+    width: 100%;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 0px;
+    height: 0px;
+    box-shadow: 0px 50vh 0 50vh #fffafa;
+}
+
+.container {
+    position: relative;
+}
+
+.seekbar-container {
+    width: 100%;
+}
+
+#spinner {
+    height: 30%;
+    align-self: center;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.7);
+}

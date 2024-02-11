@@ -1,0 +1,48 @@
+<html>
+    <head>
+        <link href="#playerStyle" rel="stylesheet">
+        <meta name="darkreader" content="Ignore Me Pls">
+    </head>
+    <body>
+        <div id="player">
+            <video id="video"></video>
+            <div id="overlay">
+                <div class="spinner-container"></div>
+            </div>
+            <div id="controlBox">
+                <div id="controls">
+                    <div class="container">
+                        <button id="playpause"></button>
+                    </div>
+                    <div class="container seekbar-container">
+                        <div id="seekbar">
+                            <div id="progress"></div>
+                            <div id="line"></div>
+                            <div id="control"></div> <!-- fix this name -->
+                        </div>
+                    </div>
+                    <div class="container volume-container">
+                        <button id="volume"></button>
+                        <div id="dropup">
+                            <span id="volume-value">80</span>
+                            <div id="range-container"><input type="range" id="volume-slider" min="0" max="100"/></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div hidden>
+            <svg id="pauseIcon"   fill="#FFFAFA" viewBox="0 0 24 24"><path d="M6.5,0A3.5,3.5,0,0,0,3,3.5v17a3.5,3.5,0,0,0,7,0V3.5A3.5,3.5,0,0,0,6.5,0Z"/><path d="M17.5,0A3.5,3.5,0,0,0,14,3.5v17a3.5,3.5,0,0,0,7,0V3.5A3.5,3.5,0,0,0,17.5,0Z"/></svg>
+            <svg id="playIcon"    fill="#FFFAFA" viewBox="0 0 24 24"><path d="M20.492,7.969,10.954.975A5,5,0,0,0,3,5.005V19a4.994,4.994,0,0,0,7.954,4.03l9.538-6.994a5,5,0,0,0,0-8.062Z"/></svg>
+            <svg id="volumeFull"  fill="#FFFAFA" viewBox="0 0 24 24"><path d="M20.8,4.293A1,1,0,0,0,19.39,5.707a8.911,8.911,0,0,1,0,12.586A1,1,0,1,0,20.8,19.707,10.911,10.911,0,0,0,20.8,4.293Z"/><path d="M18.093,7.293a1,1,0,1,0-1.414,1.414,4.664,4.664,0,0,1,0,6.586,1,1,0,1,0,1.414,1.414A6.665,6.665,0,0,0,18.093,7.293Z"/><path d="M13.819.207A12.055,12.055,0,0,0,6.268,5H5a5.006,5.006,0,0,0-5,5v4a5.006,5.006,0,0,0,5,5H6.269a12.051,12.051,0,0,0,7.55,4.793A1,1,0,0,0,15,22.81V1.19A1,1,0,0,0,13.819.207Z"/></svg>
+            <svg id="volumeLow"   fill="#FFFAFA" viewBox="0 0 24 24"><path d="m14.003,23.814c-.06,0-.121-.005-.181-.017-2.999-.551-5.752-2.299-7.554-4.794h-1.271C2.241,19.003-.002,16.76-.002,14.003v-4.005C-.002,7.241,2.241,4.998,4.998,4.998h1.271C8.068,2.506,10.821.758,13.822.204c.294-.053.593.024.821.215.229.19.36.472.36.769v21.627c0,.297-.132.579-.36.769-.181.151-.408.231-.64.231Zm4.02-7.042c2.632-2.632,2.632-6.914,0-9.546-.391-.391-1.023-.391-1.414,0s-.391,1.023,0,1.414c1.852,1.852,1.852,4.866,0,6.718-.391.391-.391,1.023,0,1.414.195.195.451.293.707.293s.512-.098.707-.293Z"/></svg>
+            <svg id="volumeOff"   fill="#FFFAFA" viewBox="0 0 24 24"><path d="m14.004,23.814c-.061,0-.121-.005-.181-.017-2.999-.551-5.752-2.299-7.554-4.794h-1.271C2.241,19.003-.002,16.76-.002,14.003v-4.005C-.002,7.241,2.241,4.998,4.998,4.998h1.271C8.068,2.505,10.821.758,13.822.204c.294-.052.594.025.821.215.229.19.36.472.36.769v21.627c0,.297-.132.579-.36.769-.181.151-.407.231-.64.231Z"/></svg>
+            <svg id="volumeMuted" fill="#FFFAFA" viewBox="0 0 24 24"><path d="m13.644.418c-.228-.19-.529-.268-.821-.215-3.001.555-5.754,2.302-7.554,4.794h-.271C2.241,4.998-.002,7.241-.002,9.998v4.005C-.002,16.76,2.241,19.003,4.998,19.003h.271c1.802,2.495,4.555,4.243,7.554,4.794.06.011.121.017.181.017.232,0,.459-.081.64-.231.228-.19.36-.472.36-.769V1.187c0-.297-.131-.579-.36-.769Zm10.089,13.875c.391.391.391,1.023,0,1.414-.195.195-.451.293-.707.293s-.512-.098-.707-.293l-2.293-2.293-2.293,2.293c-.195.195-.451.293-.707.293s-.512-.098-.707-.293c-.391-.391-.391-1.023,0-1.414l2.293-2.293-2.293-2.293c-.391-.391-.391-1.023,0-1.414s1.023-.391,1.414,0l2.293,2.293,2.293-2.293c.391-.391,1.023-.391,1.414,0s.391,1.023,0,1.414l-2.293,2.293,2.293,2.293Z"/></svg>
+            <svg id="spinner"     fill="#FFFAFA" viewBox="15 15 70 70"><g transform="rotate(0 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.9166666666666666s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(30 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.8333333333333334s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(60 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.75s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(90 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.6666666666666666s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(120 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.5833333333333334s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(150 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.5s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(180 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.4166666666666667s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(210 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.3333333333333333s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(240 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.25s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(270 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.16666666666666666s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(300 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="-0.08333333333333333s" repeatCount="indefinite"></animate></rect></g><g transform="rotate(330 50 50)"><rect x="47" y="19.5" rx="3" ry="3" width="6" height="15" fill="#ffffff"><animate attributeName="opacity" values="1;0" keyTimes="0;1" dur="1s" begin="0s" repeatCount="indefinite"></animate></rect></g></svg>
+        </div>
+        <script src="#playerScript"></script>
+    </body>
+</html>
+
+<!-- fill="#FFFFFF" -->

@@ -1,22 +1,28 @@
 {
-  "manifest_version": 3,
-  "name": "DocumentPIP",
-  "version": "0.0.1",
-  "description": "Add Document PIP fuctionality to YT",
-  "content_scripts": [
-    {
-      "js": ["content.js"],
-      "css": ["video-js.min.css"],
-      "matches": [
-        "https://www.youtube.com/watch?v=*"
-      ],
-      "run_at": "document_end"
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": [ "video.min.js", "video-js.min.css", "pip.js" ],
-      "matches": [ "https://www.youtube.com/*" ]
-    }
-  ]
-}
+    "manifest_version": 3,
+    "name": "DocumentPIP",
+    "version": "0.0.3",
+    "description": "Add Document PIP fuctionality everywhere",
+    "background": {
+        "service_worker": "background.js",
+        "type": "module"
+    },
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "externally_connectable": {
+        "matches": [ "<all_urls>" ]
+    },
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "webNavigation",
+        "storage"
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [ "player.js", "style.css", "player.html" ],
+            "matches": [ "<all_urls>" ]
+        }
+    ]
+} 

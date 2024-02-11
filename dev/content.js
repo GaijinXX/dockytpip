@@ -1,42 +1,71 @@
-const expandButton = document.createElement('button');
-expandButton.textContent = 'Open PIP';
-window.document.getElementsByClassName("ytp-left-controls")[0].append(expandButton);
+let expectedSize = {};
+let playerWindowVariables = {};
 
-async function openPiP() {
-  const pipOptions = {
-    width: 650,
-    height: 400,
-  };
+//openPiP into separate file
+//make videoAspectRatio optional
+async function openPiP(video, videoAspectRatio) {
+    const playerHTML = chrome.runtime.sendMessage({ getPlayerHTML: "" });
+    const { videoHeight, nonClientAreaSize, isBraveMode } = playerWindowVariables;
 
-  let script = document.createElement("script");
-  script.setAttribute("src", chrome.runtime.getURL("video.min.js"));
+    const pipOptions = {
+        height: videoHeight + nonClientAreaSize.vertical,
+        width:  videoHeight / videoAspectRatio + nonClientAreaSize.horizontal,
+    };
+    
+    if(isBraveMode === true) {
+        setBraveMode(pipOptions);
+    }
+    expectedSize = pipOptions;
 
-  let link = document.createElement("link");
-  link.setAttribute("href", chrome.runtime.getURL("video-js.min.css"));
-  link.setAttribute("rel", "stylesheet");
+    const pipWindow = await documentPictureInPicture.requestWindow(pipOptions);
 
-  const pipWindow = await documentPictureInPicture.requestWindow(pipOptions);
-
-  pipWindow.document.head.append(script, link);
-
-  pipWindow.document.body.style.margin = "0px";
-  
-  let video = document.getElementsByTagName("video")[0];
-  pipWindow.document.body.append(video);
-
-  let pipscript = document.createElement("script");
-  pipscript.setAttribute("src", chrome.runtime.getURL("pip.js"));
-  pipWindow.document.body.append(pipscript);
-  let style = video.style.cssText;
-  video.removeAttribute("style");
-
-  pipWindow.addEventListener('pagehide', () => {
-    document.getElementsByClassName("html5-video-container")[0].append(video);
-    video.style = style;
-    video.className = "video-stream html5-main-video";
-  });
+    pipWindow.document.write(await playerHTML);
+    const originalVideoLocation = video.parentElement;
+    pipWindow.document.getElementById("video").replaceWith(video);
+    pipWindow.addEventListener('pagehide', () => {
+        originalVideoLocation.append(video);
+        //video.style.top = "0px";.
+    });
 }
 
-expandButton.addEventListener('click', () => {
-  openPiP();
+//Stupid hack around a bug, better than nothing;
+function setBraveMode(pipOptions) {
+    pipOptions.width  += 25;
+    pipOptions.height += 39;
+}
+
+function findAllVideos() {
+    return document.getElementsByTagName("video");
+}
+
+let videoList = [];
+document.addEventListener("readystatechange", () => {
+    console.log("readystatechange")
+    //Consecutive function calls after openPiP might ruin order of videos in array
+    videoList = findAllVideos();
 });
+
+(async () => {
+    playerWindowVariables = await chrome.runtime.sendMessage({ getPlayerWindowVariables: "" });
+})();
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if(Object.keys(message)[0] === "getVideo") {
+        openPiP(videoList[message.getVideo], message.videoAspectRatio, message.videoHeight);
+    }
+});
+
+window.addEventListener("message", (event) => {
+    switch (Object.keys(event.data)[0]) {
+        case "playerSize":
+            let actualSize = event.data.playerSize;
+            console.log(" finalSize: ", (actualSize), " originalSize: ", (expectedSize));
+            console.log(" heightDiff: " + (actualSize.height - expectedSize.height) + " widthDiff: " + (actualSize.width - expectedSize.width));
+            break;
+        case "nonClientAreaSize":
+            chrome.runtime.sendMessage({ setNonClientAreaSize: event.data.nonClientAreaSize });
+            break;
+        default:
+            break;
+    }
+}, false);
