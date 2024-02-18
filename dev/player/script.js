@@ -30,16 +30,20 @@ let isResizeHandlerObserverActive = false;
 let isResizeToBeFiredByCode = false;
 
 function setInitialPlayerState() {
-    originalWindow.postMessage({ playerSize: {
-        height: window.outerHeight, 
-        width:  window.outerWidth
-    }});
+    originalWindow.postMessage({ 
+        playerSize: {
+            height: window.outerHeight, 
+            width:  window.outerWidth
+        }
+    });
     verticalNonClientAreaSize    = window.outerHeight - window.innerHeight;
     horizontalNonClientAreaSize  = window.outerWidth  - window.innerWidth;
-    originalWindow.postMessage({ nonClientAreaSize: {
-        vertical: verticalNonClientAreaSize, 
-        horizontal: horizontalNonClientAreaSize
-    }});
+    originalWindow.postMessage({ 
+        nonClientAreaSize: {
+            vertical: verticalNonClientAreaSize, 
+            horizontal: horizontalNonClientAreaSize
+        }
+    });
     videoAspectRatio = video.videoWidth / video.videoHeight
     //resizeHandler();
     setVolume();

@@ -1,27 +1,37 @@
-import addYoutubeHandler from "./youtubeHandler.js";
+import addYoutubeHandler from "./handlers/youtubeHandler.js";
 
 let videoHeight = 300;
-let nonClientAreaSize = {vertical: 0, horizontal: 0};
+let nonClientAreaSize = {horizontal: 0, vertical: 0};
 let isBraveMode = false;
 let playerHTML = "";
+let videoList = [];
+let isValuesInitialised = false;
 
 async function initiliseValues() {
-    chrome.storage.local.get("nonClientAreaSize").then(value => {
-        if(Object.keys(value).length > 0) {
-            nonClientAreaSize = Object.values(value)[0];
-        }
-    });
-    chrome.storage.local.get("isBraveMode").then(value => {
-        if(Object.keys(value).length > 0) {
-            isBraveMode = Object.values(value)[0];
-        }
+    const nonClientAreaSizePromise = getSingleValueFromStorage("nonClientAreaSize");
+    const isBraveModePromise = getSingleValueFromStorage("isBraveMode");
+    Promise.allSettled([nonClientAreaSizePromise, isBraveModePromise]).then(async () => {
+        nonClientAreaSize = await nonClientAreaSizePromise ?? nonClientAreaSize ;
+        isBraveMode = await isBraveModePromise ?? isBraveMode;
+        isValuesInitialised = true;
     });
 }
 
+async function getSingleValueFromStorage(valueName) {
+    const valuePromise = chrome.storage.local.get(valueName).then(value => {
+        if(Object.keys(value).length !== 1) {
+            return;
+        }
+        return Object.values(value)[0];
+    });
+
+    return valuePromise;
+}
+
 async function buildUpPlayer() {
-    let playerHTML = await fetch(chrome.runtime.getURL("player.html")).then(res => res.text());
-    playerHTML = playerHTML.replace("#playerStyle",  chrome.runtime.getURL("style.css"));
-    playerHTML = playerHTML.replace("#playerScript", chrome.runtime.getURL("player.js"));
+    let playerHTML = await fetch(chrome.runtime.getURL("player/player.html")).then(res => res.text());
+    playerHTML = playerHTML.replace("#playerStyle",  chrome.runtime.getURL("player/style.css"));
+    playerHTML = playerHTML.replace("#playerScript", chrome.runtime.getURL("player/script.js"));
     return playerHTML;
 }
 
@@ -34,58 +44,104 @@ function setBraveMode(isTrue) {
     chrome.storage.local.set({ isBraveMode });
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    switch (Object.keys(message)[0]) {
-        case "getPlayerHTML":
-            sendResponse(playerHTML);
-            break;
-        case "getVideo":
-            chrome.tabs.sendMessage(sender.tab.id, Object.assign(message, { videoHeight }));
-            break;
-        case "getVideoHeight":
-            sendResponse(videoHeight);
-            break;
-        case "getIsBraveMode":
-            sendResponse(isBraveMode);
-            break;
-        case "getNonClientAreaSize":
-            sendResponse(nonClientAreaSize);
-            break;
-        case "getPlayerWindowVariables":
-            sendResponse({ videoHeight, nonClientAreaSize, isBraveMode });
-            break;
-        case "setNonClientAreaSize":
-            nonClientAreaSize = Object.values(message)[0];
-            chrome.storage.local.set({ nonClientAreaSize });
-            break;
-        case "setBraveMode":
-            setBraveMode(Object.values(message)[0]);
-            break;
-        case "setVideoHeight":
-            videoHeight = Object.values(message)[0];
-            break;
-        default:
-            break;
-    }
-});
-
-chrome.runtime.onInstalled.addListener(() => {
+function onInstalled() {
     navigator.brave?.isBrave().then(setBraveMode)
-});
+}
+
+async function registerMainContentScript() {
+    const regScripts = await chrome.scripting.getRegisteredContentScripts({ids: ["mainContentScript"]});
+    if(regScripts.length !== 0) {
+        console.log("mainContentScript is already there");
+        return;
+    }
+    chrome.scripting.registerContentScripts([{
+        id: "mainContentScript",
+        js: ["content.js"],
+        matches: ["<all_urls>"],
+        runAt: "document_start",
+        allFrames: false,
+        persistAcrossSessions: true,
+    }]).catch((error) => {
+        console.error(error)
+    });
+}
+
+
+function messageHandler(message, sender, sendResponse) {
+    const functionToCall = messages[message.type].find(obj => obj.name === message.name)[message.type === "variable" ? message.accessor : "function"];
+    const result = functionToCall(message);
+    if(result !== undefined && result !== null) {
+        if(result instanceof Promise) {
+            result.then(res => sendResponse(res));
+            return true;
+        }
+        sendResponse(result);
+    }
+}
+
+const messages = {
+    variable: [
+        {
+            name: "playerHTML",
+            get: () => {
+                return playerHTML;
+            }
+        },
+        {
+            name: "playerWindowVariables",
+            get: () => {
+                if(isValuesInitialised === false) {
+                    return;
+                }
+                return ({ videoHeight, nonClientAreaSize, isBraveMode });
+            }
+        },
+        {
+            name: "videoList",
+            get: (message) => {
+                //if async return true in parent handler function, base on whether returned value promise or not;
+                return chrome.tabs.sendMessage(message.tabId, message);
+            },
+            set: (message) => {
+                videoList = message.value;
+            }
+        }, 
+        {
+            name: "nonClientAreaSize",
+            set: (message) => {
+                nonClientAreaSize = message.value;
+                chrome.storage.local.set({ nonClientAreaSize });
+            }
+        }
+    ],
+    action: [
+        {
+            name: "openVideoInPip",
+            function: (message) => {
+                chrome.tabs.sendMessage(message.tabId, message);
+            }
+        }
+    ]
+}
 
 //Might want to ensure that content script is inserted into active tab on extension load
-chrome.scripting.registerContentScripts([{
-    id: "mainScript",
-    matches: ["<all_urls>"],
-    js: ['content.js']
-}]);
 
-(async () => {
-    playerHTML = await buildUpPlayer();
-})();
+async function main() {
+    chrome.runtime.onMessage.addListener(messageHandler);
+    chrome.runtime.onInstalled.addListener(onInstalled);
 
-initiliseValues();
-addYoutubeHandler();
+    (async () => {
+        playerHTML = await buildUpPlayer();
+    })();
+
+    initiliseValues();
+    registerMainContentScript();
+    addYoutubeHandler();
+}
+
+main();
+
+
 
 //TASK 1 - fix brave
 //TASK 2 - fix git
@@ -108,3 +164,4 @@ addYoutubeHandler();
 //Add controls for actions with setActionHandler()
 //Move to chrome.storage.local
 //chrome.runtime.onInstalled (?)
+//initialising with undefined might actually be  a good idea
