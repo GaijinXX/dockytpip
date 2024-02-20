@@ -1,4 +1,6 @@
-import addYoutubeHandler from "./handlers/youtubeHandler.js";
+chrome.runtime.onMessage.addListener(messageHandler);
+chrome.runtime.onInstalled.addListener(onInstalled);
+chrome.tabs.onActivated.addListener(onActivated);
 
 let videoHeight = 300;
 let nonClientAreaSize = {horizontal: 0, vertical: 0};
@@ -44,10 +46,38 @@ function setBraveMode(isTrue) {
     chrome.storage.local.set({ isBraveMode });
 }
 
+let openTabs = {};
 function onInstalled() {
+    console.log("This is an install");
+    chrome.tabs.query({}).then(tabs => {
+        tabs.forEach(tab => {
+            if(/^(chrome:\/\/)/.test(tab.url)) {
+                return;
+            }
+            openTabs[tab.id] = false 
+        });
+    });
     navigator.brave?.isBrave().then(setBraveMode)
 }
 
+function onActivated(event) {
+    if(Object.hasOwn(openTabs, event.tabId)){
+        console.log("Tab was injected");
+        injectContentScript(event.tabId);
+        delete openTabs[event.tabId];
+    }
+}
+
+function injectContentScript(tabId) {
+    chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        files: ["content.js"],
+        injectImmediately: true
+    });
+}
+
+//return to injecting via execute script (or not, but then:);
+//deactivate injected script by passing the message, after reloading extension in registerContentScripts() add excludedMathes: []; 
 async function registerMainContentScript() {
     const regScripts = await chrome.scripting.getRegisteredContentScripts({ids: ["mainContentScript"]});
     if(regScripts.length !== 0) {
@@ -65,7 +95,6 @@ async function registerMainContentScript() {
         console.error(error)
     });
 }
-
 
 function messageHandler(message, sender, sendResponse) {
     const functionToCall = messages[message.type].find(obj => obj.name === message.name)[message.type === "variable" ? message.accessor : "function"];
@@ -127,20 +156,15 @@ const messages = {
 //Might want to ensure that content script is inserted into active tab on extension load
 
 async function main() {
-    chrome.runtime.onMessage.addListener(messageHandler);
-    chrome.runtime.onInstalled.addListener(onInstalled);
-
     (async () => {
         playerHTML = await buildUpPlayer();
     })();
 
     initiliseValues();
     registerMainContentScript();
-    addYoutubeHandler();
 }
 
 main();
-
 
 
 //TASK 1 - fix brave
@@ -165,3 +189,10 @@ main();
 //Move to chrome.storage.local
 //chrome.runtime.onInstalled (?)
 //initialising with undefined might actually be  a good idea
+//add throw Error("..."); where necessary
+
+//DO SOMETHING ABOUT EXTENSION UPDATE
+//Fix YouTube button icon
+//Check if reinjection is nesessary on active tab. (chrome.tabs.query);
+//pipMessageHandler causes an error
+//remove old content script (just event listeners?)

@@ -1,11 +1,10 @@
 {
     "manifest_version": 3,
     "name": "DocumentPIP",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "Add Document PIP fuctionality everywhere",
     "background": {
-        "service_worker": "background.js",
-        "type": "module"
+        "service_worker": "background.js"
     },
     "host_permissions": [
         "<all_urls>"
@@ -17,7 +16,9 @@
         "activeTab",
         "scripting",
         "webNavigation",
-        "storage"
+        "storage",
+        "tabs",
+        "management"
     ],
     "action": {
         "default_title": "Pipette",   
@@ -25,7 +26,7 @@
     },
     "web_accessible_resources": [
         {
-            "resources": [ "player/script.js", "player/style.css", "player/player.html" ],
+            "resources": [ "player/script.js", "player/style.css", "player/player.html", "handlers/youtubeHandler.js" ],
             "matches": [ "<all_urls>" ]
         }
     ]

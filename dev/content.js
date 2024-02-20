@@ -2,16 +2,21 @@ let expectedSize = {};
 let playerWindowVariables = {};
 let videoArray = [];
 
+//injext playerHTML only if true;
+let isVideo = false;
+
 //openPiP into separate file
-//openPipAfterUserActivationautomatically if no user activation on openPiP
+//openPipAfterUserActivation automatically if no user activation on openPiP
 async function openPiP(video, videoAspectRatio) {
-    const playerHTML = chrome.runtime.sendMessage({
+    console.log("openpip");
+    const playerHTMLPromise = chrome.runtime.sendMessage({
         type: "variable", 
         name: "playerHTML", 
         accessor: "get" 
     });
     const { videoHeight, nonClientAreaSize, isBraveMode } = playerWindowVariables;
 
+    console.log(video);
     if(videoAspectRatio === undefined) {
         videoAspectRatio = video.videoWidth / video.videoHeight;
     }
@@ -21,7 +26,7 @@ async function openPiP(video, videoAspectRatio) {
         width:  videoHeight * videoAspectRatio + nonClientAreaSize.horizontal,
     };
     
-    console.log("Cliend Area Size is %s", JSON.stringify(nonClientAreaSize));
+    console.log("Client Area Size is %s", JSON.stringify(nonClientAreaSize));
 
     if(isBraveMode === true) {
         console.warn("Using Brave Mode");
@@ -31,7 +36,7 @@ async function openPiP(video, videoAspectRatio) {
 
     const pipWindow = await documentPictureInPicture.requestWindow(pipOptions);
 
-    pipWindow.document.write(await playerHTML);
+    pipWindow.document.write(await playerHTMLPromise);
     const originalVideoLocation = video.parentElement;
     pipWindow.document.getElementById("video").replaceWith(video);
     pipWindow.addEventListener('pagehide', () => {
@@ -47,7 +52,11 @@ function setBraveMode(pipOptions) {
 }
 
 function findAllVideos() {
-    return document.getElementsByTagName("video");
+    const videoElementsArray = document.getElementsByTagName("video");
+    if(videoElementsArray.length > 0) {
+        isVideo = true;
+    }
+    return videoElementsArray;
 }
 
 async function getPlayerWindowVariables() {
@@ -96,6 +105,7 @@ function setAndCreateVideoDescriptionList() {
 }
 
 function extensionMessageHandler(message, sender, sendResponse) {
+    console.log(message);
     if(message.type === "variable" && message.name === "videoList" && message.accessor === "get") {
         const result = createVideoDescriptionList();
         sendResponse(result);
@@ -104,7 +114,23 @@ function extensionMessageHandler(message, sender, sendResponse) {
     }
 }
 
+const globalContentScriptListenerAbortController = new AbortController();
+const listenerAbortObject = { signal: globalContentScriptListenerAbortController.signal };
+
+window.postMessage("checkIfOld");
+function removeEventListenersIfOld() {
+    if(chrome.runtime.id === undefined) {
+        globalContentScriptListenerAbortController.abort();
+        window.removeEventListener("message", pipMessageHandler);
+        document.removeEventListener("readystatechange", setAndCreateVideoDescriptionList);
+        //for(const listener of contentListenerArray) { listener.element.removeEventListener(listener.action, listener.function, {listener.options}) };
+    }
+}
+
 function pipMessageHandler(event) {
+    if(event.data === "checkIfOld") {
+        removeEventListenersIfOld();
+    }
     switch (Object.keys(event.data)[0]) {
         case "playerSize":
             let actualSize = event.data.playerSize;
@@ -124,12 +150,23 @@ function pipMessageHandler(event) {
     }
 }
 
+async function addYoutubeHandler() {
+
+    const src = chrome.runtime.getURL("/handlers/youtubeHandler.js");
+    const youtubeHandler = await import(src);
+    youtubeHandler.add();
+}
+
 function main() {
     chrome.runtime.onMessage.addListener(extensionMessageHandler);
-    document.addEventListener("readystatechange", setAndCreateVideoDescriptionList);
     window.addEventListener("message", pipMessageHandler, false);
-
+    document.addEventListener("readystatechange", setAndCreateVideoDescriptionList);
+    createVideoDescriptionList();
     getPlayerWindowVariables();
+
+    if(/^(https:\/\/www\.youtube\.com)/.test(window.location.href)) {
+        addYoutubeHandler();
+    }
 }
 
 main();

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="100%"
+   version="1.1"
+   viewBox="0 0 36 36"
+   width="100%"
+   fill-opacity="1"
+   id="svg1"
+   sodipodi:docname="youTubePip.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#000000"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="8"
+     inkscape:cx="-17.625"
+     inkscape:cy="35.1875"
+     inkscape:window-width="2560"
+     inkscape:window-height="1511"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <path
+     d="m 8.9228738,8.9228738 c -1.4393728,0 -2.5934646,1.1670592 -2.5934646,2.5934642 v 12.967324 c 0,1.426405 1.1540918,2.593464 2.5934646,2.593464 H 27.077126 c 1.426406,0 2.593465,-1.167059 2.593465,-2.593464 V 11.516338 c 0,-1.426405 -1.167059,-2.5934642 -2.593465,-2.5934642 z"
+     fill="#ffffff"
+     id="path1"
+     sodipodi:nodetypes="sssssssss"
+     style="stroke-width:1.29673" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-family:'CaskaydiaCove Nerd Font';-inkscape-font-specification:'CaskaydiaCove Nerd Font Semi-Bold';fill:#000000"
+     x="7.21875"
+     y="22.464844"
+     id="text1"><tspan
+       sodipodi:role="line"
+       id="tspan1"
+       x="7.21875"
+       y="22.464844"
+       style="font-style:normal;font-variant:normal;font-weight:600;font-stretch:normal;font-family:'CaskaydiaCove Nerd Font';-inkscape-font-specification:'CaskaydiaCove Nerd Font Semi-Bold'">PiP</tspan></text>
+</svg>
