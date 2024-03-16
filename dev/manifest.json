@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "DocumentPIP",
-    "version": "0.0.6",
+    "name": "PiPette",
+    "version": "0.0.7",
     "description": "Add Document PIP fuctionality everywhere",
     "background": {
         "service_worker": "background.js"
@@ -18,7 +18,8 @@
         "webNavigation",
         "storage",
         "tabs",
-        "management"
+        "management",
+        "contextMenus"
     ],
     "action": {
         "default_title": "Pipette",   

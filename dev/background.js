@@ -4,17 +4,15 @@ chrome.tabs.onActivated.addListener(onActivated);
 
 let videoHeight = 300;
 let nonClientAreaSize = {horizontal: 0, vertical: 0};
-let isBraveMode = false;
 let playerHTML = "";
 let videoList = [];
 let isValuesInitialised = false;
+let excludedDomainsArray = [];
 
 async function initiliseValues() {
     const nonClientAreaSizePromise = getSingleValueFromStorage("nonClientAreaSize");
-    const isBraveModePromise = getSingleValueFromStorage("isBraveMode");
-    Promise.allSettled([nonClientAreaSizePromise, isBraveModePromise]).then(async () => {
+    Promise.allSettled([nonClientAreaSizePromise]).then(async () => {
         nonClientAreaSize = await nonClientAreaSizePromise ?? nonClientAreaSize ;
-        isBraveMode = await isBraveModePromise ?? isBraveMode;
         isValuesInitialised = true;
     });
 }
@@ -37,15 +35,6 @@ async function buildUpPlayer() {
     return playerHTML;
 }
 
-function setBraveMode(isTrue) {
-    if(isTrue) {
-        isBraveMode = true;
-    } else {
-        isBraveMode = false;
-    }
-    chrome.storage.local.set({ isBraveMode });
-}
-
 let openTabs = {};
 function onInstalled() {
     console.log("This is an install");
@@ -54,10 +43,13 @@ function onInstalled() {
             if(/^(chrome:\/\/)/.test(tab.url)) {
                 return;
             }
-            openTabs[tab.id] = false 
+            if(tab.active === true) {
+                injectContentScript(tab.id);
+                return;
+            }
+            openTabs[tab.id] = false;
         });
     });
-    navigator.brave?.isBrave().then(setBraveMode)
 }
 
 function onActivated(event) {
@@ -88,6 +80,7 @@ async function registerMainContentScript() {
         id: "mainContentScript",
         js: ["content.js"],
         matches: ["<all_urls>"],
+        excludeMatches: excludedDomainsArray,
         runAt: "document_start",
         allFrames: false,
         persistAcrossSessions: true,
@@ -96,6 +89,7 @@ async function registerMainContentScript() {
     });
 }
 
+//throw propper error if content script on the tabId doesent exist
 function messageHandler(message, sender, sendResponse) {
     const functionToCall = messages[message.type].find(obj => obj.name === message.name)[message.type === "variable" ? message.accessor : "function"];
     const result = functionToCall(message);
@@ -122,7 +116,7 @@ const messages = {
                 if(isValuesInitialised === false) {
                     return;
                 }
-                return ({ videoHeight, nonClientAreaSize, isBraveMode });
+                return ({ videoHeight, nonClientAreaSize });
             }
         },
         {
@@ -134,12 +128,48 @@ const messages = {
             set: (message) => {
                 videoList = message.value;
             }
-        }, 
+        },
         {
             name: "nonClientAreaSize",
             set: (message) => {
                 nonClientAreaSize = message.value;
                 chrome.storage.local.set({ nonClientAreaSize });
+            }
+        },
+        {
+            name: "isDomainExcluded",
+            set: (message) => {
+                console.log(message.websiteUrl);
+                const websiteMask = "*://" + message.websiteUrl + "/*";
+
+                if(message.value === true) {
+                    excludedDomainsArray.push(websiteMask);
+                    console.log(`Website ${websiteMask} is added!!!`);
+                } else {
+                    excludedDomainsArray = excludedDomainsArray.filter((item) => item !== websiteMask);
+                    console.log(`Website ${websiteMask} is removed ;(`);
+                }
+
+                chrome.storage.sync.set({ excludedDomainsArray: excludedDomainsArray }).then(() => {
+                    console.log("Value is set");
+                });
+
+                console.log(excludedDomainsArray);
+                chrome.scripting.updateContentScripts([{
+                    id: "mainContentScript",
+                    excludeMatches: excludedDomainsArray
+                }])
+
+                chrome.tabs.sendMessage(message.tabId, {
+                    type: "variable", 
+                    name: "isContentScriptActive", 
+                    accessor: "set",
+                    value: message.value,
+                });
+            }, 
+            get: (message) => {
+                const websiteMask = "*://" + message.websiteUrl + "/*";
+                return excludedDomainsArray.includes(websiteMask);
             }
         }
     ],
@@ -161,38 +191,26 @@ async function main() {
     })();
 
     initiliseValues();
-    registerMainContentScript();
+    chrome.storage.sync.get(["excludedDomainsArray"]).then((result) => {
+        console.log(result);
+        excludedDomainsArray = result.excludedDomainsArray ?? [];
+        console.log(excludedDomainsArray);
+        registerMainContentScript();
+    });
 }
 
 main();
 
 
-//TASK 1 - fix brave
-//TASK 2 - fix git
-//TASK 3 - add menu for any site
-//TASK 4 - explore media session enterpictureinpicture on changing tab, very cool
-//TASK 5 - FIX BUGS, look throu comments
 //TASK 6 - clean up the code
 //TASK 7 - add proper menu and an ability to exclude sites
 //TASK 8 - add initial setup screen for the player
 //TASK 8.5 - add indicator that shows that resize is required (RED DOT)
-//TASK 9 - refacor resize completly, do it only when nessesary 
+//TASK 9 - refacor resize completly, do it only when nessesary
 //TASK 10 - MORE BUG FIXES AND TESTING ON DIFFERENT PLATFORMS AND ENVIROMENTS
-//
-//???????
-//
-//...
-//
-//PROFIT!!1!11!!1!
-//Add tab mute indicator (or just force mute in video)
 //Add controls for actions with setActionHandler()
 //Move to chrome.storage.local
-//chrome.runtime.onInstalled (?)
-//initialising with undefined might actually be  a good idea
 //add throw Error("..."); where necessary
-
-//DO SOMETHING ABOUT EXTENSION UPDATE
-//Fix YouTube button icon
-//Check if reinjection is nesessary on active tab. (chrome.tabs.query);
-//pipMessageHandler causes an error
-//remove old content script (just event listeners?)
+// Add context menu as an option later
+//https://developer.chrome.com/docs/web-platform/document-picture-in-picture#focus_the_opener_window
+//Add checks for browser version during extension (initialisation/browser update)

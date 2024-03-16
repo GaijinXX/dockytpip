@@ -8,47 +8,57 @@ let isVideo = false;
 //openPiP into separate file
 //openPipAfterUserActivation automatically if no user activation on openPiP
 async function openPiP(video, videoAspectRatio) {
-    console.log("openpip");
+    console.log("Opening PiP window");
     const playerHTMLPromise = chrome.runtime.sendMessage({
         type: "variable", 
         name: "playerHTML", 
         accessor: "get" 
     });
-    const { videoHeight, nonClientAreaSize, isBraveMode } = playerWindowVariables;
+    const { videoHeight, nonClientAreaSize} = playerWindowVariables;
 
     console.log(video);
     if(videoAspectRatio === undefined) {
         videoAspectRatio = video.videoWidth / video.videoHeight;
     }
 
-    const pipOptions = {
-        height: videoHeight + nonClientAreaSize.vertical,
-        width:  videoHeight * videoAspectRatio + nonClientAreaSize.horizontal,
-    };
-    
+    const isLegacy = navigation.activation === undefined;
+    console.log(`Chromium version is less than 123: ${isLegacy}`);
+
+    let pipOptions;
+    if(isLegacy) {
+        pipOptions = {
+            height: videoHeight + nonClientAreaSize.vertical,
+            width:  videoHeight * videoAspectRatio + nonClientAreaSize.horizontal,
+        };
+
+        const isBraveMode = navigator.brave !== undefined;
+        if(isBraveMode === true) {
+            //Stupid hack around a bug, better than nothing;
+            console.log("Using Brave Legacy Mode");
+            pipOptions.width  += 25;
+            pipOptions.height += 39;
+        }
+    } else {
+        pipOptions = {
+            height: videoHeight,
+            width:  videoHeight * videoAspectRatio,
+        };
+    }
+
     console.log("Client Area Size is %s", JSON.stringify(nonClientAreaSize));
 
-    if(isBraveMode === true) {
-        console.warn("Using Brave Mode");
-        setBraveMode(pipOptions);
-    }
     expectedSize = pipOptions;
 
     const pipWindow = await documentPictureInPicture.requestWindow(pipOptions);
 
     pipWindow.document.write(await playerHTMLPromise);
     const originalVideoLocation = video.parentElement;
+    //console.log(video);
     pipWindow.document.getElementById("video").replaceWith(video);
     pipWindow.addEventListener('pagehide', () => {
         originalVideoLocation.append(video);
         //video.style.top = "0px";.
     });
-}
-
-//Stupid hack around a bug, better than nothing;
-function setBraveMode(pipOptions) {
-    pipOptions.width  += 25;
-    pipOptions.height += 39;
 }
 
 function findAllVideos() {
@@ -73,8 +83,8 @@ async function getPlayerWindowVariables() {
 //Switch to pip call by onclick
 function openPipAfterUserActivation(videoNumber) {
     const activationDiv = document.createElement("div");
-    activationDiv.style = "position: absolute; background-color: #D9D9D9; width: 100%; height: 100%; opacity: 0.7; z-index: 9999999999;";
-    document.body.append(activationDiv);
+    activationDiv.style = "position: fixed; background-color: #D9D9D9; top: 0px; left: 0px; width: 100%; height: 100%; opacity: 0.7; z-index: 9999999999;";
+    document.body.prepend(activationDiv);
     activationDiv.addEventListener("click", () => {
         openPiP(videoArray[videoNumber]);
         activationDiv.remove();
@@ -104,14 +114,56 @@ function setAndCreateVideoDescriptionList() {
     });
 }
 
-function extensionMessageHandler(message, sender, sendResponse) {
-    console.log(message);
-    if(message.type === "variable" && message.name === "videoList" && message.accessor === "get") {
-        const result = createVideoDescriptionList();
+
+function messageHandler(message, sender, sendResponse) {
+    const functionToCall = messages[message.type].find(obj => obj.name === message.name)[message.type === "variable" ? message.accessor : "function"];
+    const result = functionToCall(message);
+    if(result !== undefined && result !== null) {
+        if(result instanceof Promise) {
+            result.then(res => sendResponse(res));
+            return true;
+        }
         sendResponse(result);
-    } else if(message.type === "action" && message.name === "openVideoInPip") {
-        openPipAfterUserActivation(message.value);
     }
+}
+
+let isContentScriptActive = true;
+const messages = {
+    variable: [
+        {
+            name: "videoList",
+            get: () => {
+                return createVideoDescriptionList();
+            }
+        },
+        {
+            name: "activeState",
+            get: () => {
+                return isTabActive;
+            },
+            set: (message) => {
+                isTabActive = message.value;
+            }
+        },
+        {
+            name: "isContentScriptActive",
+            get: () => {
+                return isContentScriptActive;
+            },
+            set: (message) => {
+                isContentScriptActive = message.value;
+                console.log(`isContentScriptActive: ${isContentScriptActive}`);
+            } 
+        }
+    ],
+    action: [
+        {
+            name: "openVideoInPip",
+            function: (message) => {
+                openPipAfterUserActivation(message.value);
+            }
+        }
+    ]
 }
 
 const globalContentScriptListenerAbortController = new AbortController();
@@ -151,14 +203,13 @@ function pipMessageHandler(event) {
 }
 
 async function addYoutubeHandler() {
-
     const src = chrome.runtime.getURL("/handlers/youtubeHandler.js");
     const youtubeHandler = await import(src);
     youtubeHandler.add();
 }
 
 function main() {
-    chrome.runtime.onMessage.addListener(extensionMessageHandler);
+    chrome.runtime.onMessage.addListener(messageHandler);
     window.addEventListener("message", pipMessageHandler, false);
     document.addEventListener("readystatechange", setAndCreateVideoDescriptionList);
     createVideoDescriptionList();
@@ -170,3 +221,7 @@ function main() {
 }
 
 main();
+
+//Fix popup design
+//Add initial instructions
+//Make it work when clicking a button from fullscreen

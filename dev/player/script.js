@@ -18,6 +18,8 @@ const volumeMutedIcon = document.getElementById("volumeMuted").outerHTML;
 
 const spinnerIcon   = document.getElementById("spinner").outerHTML;
 
+const resizeMarker = document.getElementById("resizeMarker");
+
 const video = document.getElementsByTagName("video")[0];
 const originalWindow = window.opener;
 
@@ -44,7 +46,7 @@ function setInitialPlayerState() {
             horizontal: horizontalNonClientAreaSize
         }
     });
-    videoAspectRatio = video.videoWidth / video.videoHeight
+    videoAspectRatio = video.videoWidth / video.videoHeight;
     //resizeHandler();
     setVolume();
     updateSeekbarPosition();
@@ -115,12 +117,14 @@ function resizeHandler() {
     if(isResizeHandlerObserverActive === true) {
         return;
     }
+    resizeMarker.removeAttribute("hidden");
     isResizeHandlerObserverActive = true;
     let userActionObserver = setInterval(() => {
         if(navigator.userActivation.isActive === true) {
             isResizeToBeFiredByCode = true;
             isResizeHandlerObserverActive = false;
             window.resizeTo(window.outerWidth, window.innerWidth / videoAspectRatio + verticalNonClientAreaSize);
+            resizeMarker.setAttribute("hidden", "");
             clearInterval(userActionObserver);
         }
     }, 100);
